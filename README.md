@@ -34,7 +34,7 @@ Add a new record, to a pre-existing zone in the AWS account.
 $ ./bin/awdns add foo4.example.com 127.0.0.1
 ```
 
-Delete one or more records, from a pre-existing zone in the AWS account.
+Delete *all* records matching NAME, from a pre-existing zone in the AWS account.
 ```
 $ ./bin/awdns del foo4.example.com
 ```
