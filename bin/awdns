@@ -26,7 +26,7 @@ program
   .action(cmd_del_record);
 
 program
-  .command('ls <id>')
+  .command('ls <DOMAIN>')
   .description('List all records for zone')
   .action(cmd_list_records);
 
@@ -41,6 +41,15 @@ function shortZoneId(longId) {
   const matches = reId.exec(longId);
   if (matches) return matches[1];
   return null;
+}
+
+function dn_normalize(fqdn) {
+  var re = /\.$/g;
+  if (!re.test(fqdn)) {
+    fqdn = fqdn + '.';
+  }
+
+  return fqdn;
 }
 
 function getZoneList() {
@@ -168,21 +177,16 @@ function print_rec_list(data)
   });
 }
 
-function cmd_list_records(zoneId) {
-  getRecordList(zoneId)
+function cmd_list_records(domainName) {
+
+  domainName = dn_normalize(domainName);
+
+  lookupZoneId(domainName)
+    .then(getRecordList)
     .then(print_rec_list)
     .catch(function(err) {
       console.error(err.message);
     });
-}
-
-function dn_normalize(fqdn) {
-  var re = /\.$/g;
-  if (!re.test(fqdn)) {
-    fqdn = fqdn + '.';
-  }
-
-  return fqdn;
 }
 
 function cmd_add_record(fqdn, addrStr) {

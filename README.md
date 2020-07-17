@@ -17,17 +17,29 @@ domains for the most popular DNS records (A, AAAA).
 
 ## Examples
 
-Add a new record.
+List all zones in the AWS account.
+```
+$ ./bin/awdns zones
+```
+
+List all records associated with a single zone, in a BIND-like format.
+```
+$ ./bin/awdns ls example.com
+```
+
+Add a new record, to a pre-existing zone in the AWS account.
 ```
 $ ./bin/awdns add foo4.example.com 127.0.0.1
 ```
 
-Delete one or more records.
+Delete one or more records, from a pre-existing zone in the AWS account.
 ```
 $ ./bin/awdns del foo4.example.com
 ```
 
 ## Usage
+
+AWS authentication is handled via the AWS JavaScript SDK ([Credential details here.](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)).
 
 Full command line via `--help` on the command line:
 ```
@@ -41,7 +53,7 @@ Options:
 Commands:
   add <FQDN> <address>  Add A or AAAA record to zone
   del <FQDN>            Delete all RRs from a zone with given FQDN
-  ls <id>               List all records for zone
+  ls <DOMAIN>           List all records for zone
   zones                 List all zones
 
   help [command]        display help for command
