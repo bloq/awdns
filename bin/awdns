@@ -25,7 +25,7 @@ program
 
 program.parse(process.argv);
 
-function getZoneList(cb) {
+function getZoneList() {
   const params = {};
 
   const p = route53.listHostedZones(params).promise();
@@ -37,7 +37,7 @@ function getZoneList(cb) {
   });
 }
 
-function getRecordList(id, cb) {
+function getRecordList(id) {
   const params = {
     HostedZoneId: id,
   };
