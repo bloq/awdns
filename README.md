@@ -24,6 +24,11 @@ List all zones in the AWS account.
 $ ./bin/awdns zones
 ```
 
+List all zones in the AWS account, with JSON output.
+```
+$ ./bin/awdns --verbose zones
+```
+
 List all records associated with a single zone, in a BIND-like format.
 ```
 $ ./bin/awdns ls example.com
