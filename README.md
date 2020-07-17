@@ -43,7 +43,7 @@ $ ./bin/awdns del foo4.example.com
 
 AWS authentication is handled via the AWS JavaScript SDK ([Credential details here.](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)).
 
-Full command line via `--help` on the command line:
+Full usage documentation via `--help` on the command line:
 ```
 Usage: awdns [options] [command]
 
