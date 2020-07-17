@@ -18,6 +18,11 @@ program
   .description('List all zones')
   .action(cmd_list_zones);
 
+program
+  .command('lszone <id>')
+  .description('List all records for zone')
+  .action(cmd_list_records);
+
 program.parse(process.argv);
 
 function getZoneList(cb) {
@@ -30,6 +35,22 @@ function getZoneList(cb) {
         console.warn("TODO - Zone data truncated");
       }
       cb(null, data.HostedZones);
+    }
+  });
+}
+
+function getRecordList(id, cb) {
+  const params = {
+    HostedZoneId: id,
+  };
+
+  route53.listResourceRecordSets(params, function(err, data) {
+    if (err) cb(err);
+    else {
+      if (data.IsTruncated) {
+        console.warn("TODO - Record data truncated");
+      }
+      cb(null, data.ResourceRecordSets);
     }
   });
 }
@@ -53,8 +74,33 @@ function print_zone_list(data)
 
 function cmd_list_zones() {
   getZoneList(function(err, zoneList) {
-    if (err) console.error(err);
+    if (err) console.error(err.message);
     else print_zone_list(zoneList);
   });
 }
 
+function print_rec(rec) {
+  if (rec.ResourceRecords.length > 0) {
+    rec.ResourceRecords.forEach(function(rr) {
+      console.log(rec.Name, rec.TTL, rec.Type, rr.Value);
+    });
+  } else if (rec.AliasTarget) {
+    console.log(rec.Name, '-', rec.Type, rec.AliasTarget.DNSName);
+  } else {
+    console.log(rec.Name, '-', rec.Type, '?');
+  }
+}
+
+function print_rec_list(data)
+{
+  data.forEach(function(rec) {
+    print_rec(rec);
+  });
+}
+
+function cmd_list_records(zoneId) {
+  getRecordList(zoneId, function(err, recordList) {
+    if (err) console.error(err.message);
+    else print_rec_list(recordList);
+  });
+}
