@@ -15,10 +15,24 @@ program.version(pjson.version);
 
 program
   .command('ls')
-  .description('Listed all zones')
+  .description('List all zones')
   .action(cmd_list_zones);
 
 program.parse(process.argv);
+
+function getZoneList(cb) {
+  const params = {};
+
+  route53.listHostedZones(params, function(err, data) {
+    if (err) cb(err);
+    else {
+      if (data.IsTruncated) {
+        console.warn("TODO - Zone data truncated");
+      }
+      cb(null, data.HostedZones);
+    }
+  });
+}
 
 function print_zone(zone)
 {
@@ -32,18 +46,15 @@ function print_zone(zone)
 
 function print_zone_list(data)
 {
-  if (!data || !data.HostedZones) return;
-
-  data.HostedZones.forEach(function(zone) {
+  data.forEach(function(zone) {
     print_zone(zone);
   });
 }
 
 function cmd_list_zones() {
-  const params = {};
-  route53.listHostedZones(params, function(err, data) {
-    if (err) console.error(err, err.stack); // an error occurred
-    else     print_zone_list(data);
+  getZoneList(function(err, zoneList) {
+    if (err) console.error(err);
+    else print_zone_list(zoneList);
   });
 }
 
