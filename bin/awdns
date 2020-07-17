@@ -28,14 +28,12 @@ program.parse(process.argv);
 function getZoneList(cb) {
   const params = {};
 
-  route53.listHostedZones(params, function(err, data) {
-    if (err) cb(err);
-    else {
-      if (data.IsTruncated) {
-        console.warn("TODO - Zone data truncated");
-      }
-      cb(null, data.HostedZones);
+  const p = route53.listHostedZones(params).promise();
+  return p.then(function(data) {
+    if (data.IsTruncated) {
+      console.warn("TODO - Record data truncated");
     }
+    return data.HostedZones;
   });
 }
 
@@ -44,14 +42,12 @@ function getRecordList(id, cb) {
     HostedZoneId: id,
   };
 
-  route53.listResourceRecordSets(params, function(err, data) {
-    if (err) cb(err);
-    else {
-      if (data.IsTruncated) {
-        console.warn("TODO - Record data truncated");
-      }
-      cb(null, data.ResourceRecordSets);
+  const p = route53.listResourceRecordSets(params).promise();
+  return p.then(function(data) {
+    if (data.IsTruncated) {
+      console.warn("TODO - Record data truncated");
     }
+    return data.ResourceRecordSets;
   });
 }
 
@@ -73,10 +69,11 @@ function print_zone_list(data)
 }
 
 function cmd_list_zones() {
-  getZoneList(function(err, zoneList) {
-    if (err) console.error(err.message);
-    else print_zone_list(zoneList);
-  });
+  getZoneList()
+    .then(print_zone_list)
+    .catch(function(err) {
+      console.error(err.message);
+    });
 }
 
 function print_rec(rec) {
@@ -99,8 +96,9 @@ function print_rec_list(data)
 }
 
 function cmd_list_records(zoneId) {
-  getRecordList(zoneId, function(err, recordList) {
-    if (err) console.error(err.message);
-    else print_rec_list(recordList);
-  });
+  getRecordList(zoneId)
+    .then(print_rec_list)
+    .catch(function(err) {
+      console.error(err.message);
+    });
 }
