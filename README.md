@@ -27,6 +27,26 @@ Delete one or more records.
 $ ./bin/awdns del foo4.example.com
 ```
 
+## Usage
+
+Full command line via `--help` on the command line:
+```
+$ ./bin/awdns --help
+Usage: awdns [options] [command]
+
+Options:
+  -V, --version         output the version number
+  -h, --help            display help for command
+
+Commands:
+  add <FQDN> <address>  Add A or AAAA record to zone
+  del <FQDN>            Delete all RRs from a zone with given FQDN
+  ls <id>               List all records for zone
+  zones                 List all zones
+
+  help [command]        display help for command
+```
+
 ## Installation
 
 ```
