@@ -21,6 +21,11 @@ program
   .action(cmd_add_record);
 
 program
+  .command('del <FQDN>')
+  .description('Delete all RRs from a zone with given FQDN')
+  .action(cmd_del_record);
+
+program
   .command('ls <id>')
   .description('List all records for zone')
   .action(cmd_list_records);
@@ -78,8 +83,6 @@ function getRecordList(id) {
 
 function addZoneRecord(id, subDomain, rec_type, addrStr)
 {
-  console.log("ADD", id, subDomain, rec_type, addrStr);
-
   const params = {
     HostedZoneId: id,
     ChangeBatch: {
@@ -98,6 +101,28 @@ function addZoneRecord(id, subDomain, rec_type, addrStr)
       ],
     },
   };
+
+  const p = route53.changeResourceRecordSets(params).promise();
+  return p;
+}
+
+function delZoneRecords(id, rrs)
+{
+  var params = {
+    HostedZoneId: id,
+    ChangeBatch: {
+      Changes: [],
+    },
+  };
+
+  rrs.forEach(function(rr) {
+    const changeObj = {
+      Action: 'DELETE',
+      ResourceRecordSet: rr,
+    };
+
+    params.ChangeBatch.Changes.push(changeObj);
+  });
 
   const p = route53.changeResourceRecordSets(params).promise();
   return p;
@@ -151,11 +176,17 @@ function cmd_list_records(zoneId) {
     });
 }
 
-function cmd_add_record(fqdn, addrStr) {
+function dn_normalize(fqdn) {
   var re = /\.$/g;
   if (!re.test(fqdn)) {
     fqdn = fqdn + '.';
   }
+
+  return fqdn;
+}
+
+function cmd_add_record(fqdn, addrStr) {
+  fqdn = dn_normalize(fqdn);
 
   var addr = null;
   var dnr = null;
@@ -180,7 +211,7 @@ function cmd_add_record(fqdn, addrStr) {
   lookupZoneId(dn)
     .then(function(id) {
       if (!id) {
-        console.error("zone not found:", dn_in);
+        console.error("zone not found:", fqdn);
 	process.exit(1);
       }
 
@@ -188,6 +219,56 @@ function cmd_add_record(fqdn, addrStr) {
     }).then(function(added) {
       console.log("SUCCESS_RECEIPT", added);
     })
+    .catch(function(err) {
+      console.error(err.message);
+    });
+}
+
+function cmd_del_record(fqdn) {
+  fqdn = dn_normalize(fqdn);
+
+  var dnr = null;
+  try {
+    dnr = parseDomain(fqdn);
+    if ((dnr.type === ParseResultType.Invalid) ||
+        (dnr.type === ParseResultType.Ip)) {
+      throw new Error("Invalid domain name: " + dn);
+    }
+  }
+  catch (e) {
+    console.error(e.message);
+    return;
+  }
+
+  const {subDomains, domain, topLevelDomains} = dnr;
+  const dn = domain + '.' + topLevelDomains + '.';
+
+  lookupZoneId(dn)
+    .then(function(id) {
+      if (!id) {
+        console.error("zone not found:", fqdn);
+	process.exit(1);
+      }
+
+      return Promise.all([id, getRecordList(id)]);
+
+    }).then(function([id, recordList]) {
+      var rrs = [];
+      recordList.forEach(function(rec) {
+        if (rec.Name === fqdn) rrs.push(rec);
+      });
+
+      if (rrs.length === 0) {
+        console.error("matching RRs not found");
+	process.exit(1);
+      }
+
+      return delZoneRecords(id, rrs);
+    }).then(function(removed) {
+      console.log("SUCCESS_RECEIPT", removed);
+
+    })
+
     .catch(function(err) {
       console.error(err.message);
     });
