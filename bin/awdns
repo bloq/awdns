@@ -14,12 +14,12 @@ const reId = new RegExp('/([^/]+)$');
 program.version(pjson.version);
 
 program
-  .command('ls')
+  .command('zones')
   .description('List all zones')
   .action(cmd_list_zones);
 
 program
-  .command('lszone <id>')
+  .command('ls <id>')
   .description('List all records for zone')
   .action(cmd_list_records);
 
