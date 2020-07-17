@@ -2,6 +2,7 @@
 
 'use strict';
 
+const util = require('util');
 const AWS = require('aws-sdk');
 const route53 = new AWS.Route53();
 const pjson = require('../package.json');
@@ -14,6 +15,9 @@ const program = new Command();
 const reId = new RegExp('/([^/]+)$');
 
 program.version(pjson.version);
+
+program
+  .option('--verbose', 'Enable verbose responses');
 
 program
   .command('add <FQDN> <address>')
@@ -145,9 +149,13 @@ function print_zone(zone)
 
 function print_zone_list(data)
 {
-  data.forEach(function(zone) {
-    print_zone(zone);
-  });
+  if (program.verbose) {
+    console.log(util.inspect(data, {showHidden: false, depth: null}))
+  } else {
+    data.forEach(function(zone) {
+      print_zone(zone);
+    });
+  }
 }
 
 function cmd_list_zones() {
@@ -172,9 +180,13 @@ function print_rec(rec) {
 
 function print_rec_list(data)
 {
-  data.forEach(function(rec) {
-    print_rec(rec);
-  });
+  if (program.verbose) {
+    console.log(util.inspect(data, {showHidden: false, depth: null}))
+  } else {
+    data.forEach(function(rec) {
+      print_rec(rec);
+    });
+  }
 }
 
 function cmd_list_records(domainName) {

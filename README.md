@@ -14,6 +14,8 @@ domains for the most popular DNS records (A, AAAA).
 * List all zones
 * List all records in a zone
 * Add a record to a zone
+* Delete records from a zone
+* Terse Unix responses (default) or verbose JSON responses.
 
 ## Examples
 
@@ -43,11 +45,11 @@ AWS authentication is handled via the AWS JavaScript SDK ([Credential details he
 
 Full command line via `--help` on the command line:
 ```
-$ ./bin/awdns --help
 Usage: awdns [options] [command]
 
 Options:
   -V, --version         output the version number
+  --verbose             Enable verbose responses
   -h, --help            display help for command
 
 Commands:
