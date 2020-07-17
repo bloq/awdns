@@ -5,6 +5,8 @@
 const AWS = require('aws-sdk');
 const route53 = new AWS.Route53();
 const pjson = require('../package.json');
+const ip6addr = require('ip6addr');
+const {parseDomain, ParseResultType} = require("parse-domain");
 
 const { Command } = require('commander');
 const program = new Command();
@@ -14,16 +16,27 @@ const reId = new RegExp('/([^/]+)$');
 program.version(pjson.version);
 
 program
-  .command('zones')
-  .description('List all zones')
-  .action(cmd_list_zones);
+  .command('add <FQDN> <address>')
+  .description('Add A or AAAA record to zone')
+  .action(cmd_add_record);
 
 program
   .command('ls <id>')
   .description('List all records for zone')
   .action(cmd_list_records);
 
+program
+  .command('zones')
+  .description('List all zones')
+  .action(cmd_list_zones);
+
 program.parse(process.argv);
+
+function shortZoneId(longId) {
+  const matches = reId.exec(longId);
+  if (matches) return matches[1];
+  return null;
+}
 
 function getZoneList() {
   const params = {};
@@ -34,6 +47,18 @@ function getZoneList() {
       console.warn("TODO - Record data truncated");
     }
     return data.HostedZones;
+  });
+}
+
+function lookupZoneId(name) {
+  const p = getZoneList();
+  return p.then(function(zoneList) {
+    var match = null;
+    zoneList.forEach(function(zone) {
+      if (name === zone.Name) match = zone.Id;
+    });
+
+    return match;
   });
 }
 
@@ -51,13 +76,36 @@ function getRecordList(id) {
   });
 }
 
+function addZoneRecord(id, subDomain, rec_type, addrStr)
+{
+  console.log("ADD", id, subDomain, rec_type, addrStr);
+
+  const params = {
+    HostedZoneId: id,
+    ChangeBatch: {
+      Changes: [
+        {
+	  Action: 'CREATE',
+	  ResourceRecordSet: {
+	    Name: subDomain,
+	    TTL: 300,
+	    Type: rec_type,
+	    ResourceRecords: [
+	      { Value: addrStr },
+	    ],
+	  },
+	},
+      ],
+    },
+  };
+
+  const p = route53.changeResourceRecordSets(params).promise();
+  return p;
+}
+
 function print_zone(zone)
 {
-  var id = '???';
-  const matches = reId.exec(zone.Id);
-  if (matches)  {
-    id = matches[1];
-  }
+  var id = shortZoneId(zone.Id);
   console.log(id + "\t" + zone.Name);
 }
 
@@ -102,3 +150,42 @@ function cmd_list_records(zoneId) {
       console.error(err.message);
     });
 }
+
+function cmd_add_record(dn_in, addrStr) {
+  var addr = null;
+  var dnr = null;
+  try {
+    addr = ip6addr.parse(addrStr);
+    dnr = parseDomain(dn_in);
+    if ((dnr.type === ParseResultType.Invalid) ||
+        (dnr.type === ParseResultType.Ip)) {
+      throw new Error("Invalid domain name: " + dn);
+    }
+  }
+  catch (e) {
+    console.error(e.message);
+    return;
+  }
+
+  const {subDomains, domain, topLevelDomains} = dnr;
+  const subStr = subDomains.join('.');  // check: reversed?
+  const dn = domain + '.' + topLevelDomains + '.';
+
+  var rec_type = (addr.kind() === 'ipv6' ? 'AAAA' : 'A');
+
+  lookupZoneId(dn)
+    .then(function(id) {
+      if (!id) {
+        console.error("zone not found:", dn_in);
+	process.exit(1);
+      }
+
+      return addZoneRecord(id, subStr + '.' + dn, rec_type, addrStr);
+    }).then(function(added) {
+      console.log("ADDED", added);
+    })
+    .catch(function(err) {
+      console.error(err.message);
+    });
+}
+
