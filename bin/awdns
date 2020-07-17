@@ -1,0 +1,49 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const AWS = require('aws-sdk');
+const route53 = new AWS.Route53();
+const pjson = require('../package.json');
+
+const { Command } = require('commander');
+const program = new Command();
+
+const reId = new RegExp('/([^/]+)$');
+
+program.version(pjson.version);
+
+program
+  .command('ls')
+  .description('Listed all zones')
+  .action(cmd_list_zones);
+
+program.parse(process.argv);
+
+function print_zone(zone)
+{
+  var id = '???';
+  const matches = reId.exec(zone.Id);
+  if (matches)  {
+    id = matches[1];
+  }
+  console.log(id + "\t" + zone.Name);
+}
+
+function print_zone_list(data)
+{
+  if (!data || !data.HostedZones) return;
+
+  data.HostedZones.forEach(function(zone) {
+    print_zone(zone);
+  });
+}
+
+function cmd_list_zones() {
+  const params = {};
+  route53.listHostedZones(params, function(err, data) {
+    if (err) console.error(err, err.stack); // an error occurred
+    else     print_zone_list(data);
+  });
+}
+
