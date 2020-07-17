@@ -41,12 +41,14 @@ program
 
 program.parse(process.argv);
 
+// remove the "/static string/" prefix from zone ID
 function shortZoneId(longId) {
   const matches = reId.exec(longId);
   if (matches) return matches[1];
   return null;
 }
 
+// ensure domain name includes trailing '.'
 function dn_normalize(fqdn) {
   var re = /\.$/g;
   if (!re.test(fqdn)) {
@@ -56,6 +58,7 @@ function dn_normalize(fqdn) {
   return fqdn;
 }
 
+// query AWS account zone list
 function getZoneList() {
   const params = {};
 
@@ -68,9 +71,12 @@ function getZoneList() {
   });
 }
 
+// lookup zone ID, given a domain name
 function lookupZoneId(name) {
   const p = getZoneList();
   return p.then(function(zoneList) {
+
+    // search for name match in zone list
     var match = null;
     zoneList.forEach(function(zone) {
       if (name === zone.Name) match = zone.Id;
@@ -80,6 +86,7 @@ function lookupZoneId(name) {
   });
 }
 
+// query all records in a specific zone
 function getRecordList(id) {
   const params = {
     HostedZoneId: id,
@@ -94,6 +101,7 @@ function getRecordList(id) {
   });
 }
 
+// add resource record to zone, given zone ID
 function addZoneRecord(id, subDomain, rec_type, addrStr)
 {
   const params = {
@@ -119,6 +127,7 @@ function addZoneRecord(id, subDomain, rec_type, addrStr)
   return p;
 }
 
+// delete resource records from zone, given zone ID and RRs to delete
 function delZoneRecords(id, rrs)
 {
   var params = {
@@ -128,6 +137,7 @@ function delZoneRecords(id, rrs)
     },
   };
 
+  // push RR list into change list
   rrs.forEach(function(rr) {
     const changeObj = {
       Action: 'DELETE',
@@ -141,12 +151,14 @@ function delZoneRecords(id, rrs)
   return p;
 }
 
+// display zone to stdout
 function print_zone(zone)
 {
   var id = shortZoneId(zone.Id);
   console.log(id + "\t" + zone.Name);
 }
 
+// display zone list, verbose or not
 function print_zone_list(data)
 {
   if (program.verbose) {
@@ -158,6 +170,7 @@ function print_zone_list(data)
   }
 }
 
+// CMD: list zones
 function cmd_list_zones() {
   getZoneList()
     .then(print_zone_list)
@@ -166,6 +179,7 @@ function cmd_list_zones() {
     });
 }
 
+// print a single RR
 function print_rec(rec) {
   if (rec.ResourceRecords.length > 0) {
     rec.ResourceRecords.forEach(function(rr) {
@@ -178,6 +192,7 @@ function print_rec(rec) {
   }
 }
 
+// display zone RR list, verbose or not
 function print_rec_list(data)
 {
   if (program.verbose) {
@@ -189,6 +204,7 @@ function print_rec_list(data)
   }
 }
 
+// CMD: list records for a zone
 function cmd_list_records(domainName) {
 
   domainName = dn_normalize(domainName);
@@ -201,9 +217,11 @@ function cmd_list_records(domainName) {
     });
 }
 
+// CMD: add record to zone
 function cmd_add_record(fqdn, addrStr) {
   fqdn = dn_normalize(fqdn);
 
+  // parse and validate IP address and domain name supplied
   var addr = null;
   var dnr = null;
   try {
@@ -219,11 +237,14 @@ function cmd_add_record(fqdn, addrStr) {
     return;
   }
 
+  // extract domain name from FQDN
   const {subDomains, domain, topLevelDomains} = dnr;
   const dn = domain + '.' + topLevelDomains + '.';
 
+  // assign IP address type
   var rec_type = (addr.kind() === 'ipv6' ? 'AAAA' : 'A');
 
+  // lookup zone, given domain name
   lookupZoneId(dn)
     .then(function(id) {
       if (!id) {
@@ -231,7 +252,10 @@ function cmd_add_record(fqdn, addrStr) {
 	process.exit(1);
       }
 
+      // add zone record, given id and other inputs
       return addZoneRecord(id, fqdn, rec_type, addrStr);
+
+    // return aws receipt
     }).then(function(added) {
       console.log("SUCCESS_RECEIPT", added);
     })
@@ -240,6 +264,7 @@ function cmd_add_record(fqdn, addrStr) {
     });
 }
 
+// CMD: delete records from zone
 function cmd_del_record(fqdn) {
   fqdn = dn_normalize(fqdn);
 
@@ -259,6 +284,7 @@ function cmd_del_record(fqdn) {
   const {subDomains, domain, topLevelDomains} = dnr;
   const dn = domain + '.' + topLevelDomains + '.';
 
+  // lookup zone, given domain name
   lookupZoneId(dn)
     .then(function(id) {
       if (!id) {
@@ -266,9 +292,11 @@ function cmd_del_record(fqdn) {
 	process.exit(1);
       }
 
+      // query list of records, for this zone
       return Promise.all([id, getRecordList(id)]);
 
     }).then(function([id, recordList]) {
+      // gather matching RRs
       var rrs = [];
       recordList.forEach(function(rec) {
         if (rec.Name === fqdn) rrs.push(rec);
@@ -279,6 +307,7 @@ function cmd_del_record(fqdn) {
 	process.exit(1);
       }
 
+      // issue AWS record deletion request
       return delZoneRecords(id, rrs);
     }).then(function(removed) {
       console.log("SUCCESS_RECEIPT", removed);
