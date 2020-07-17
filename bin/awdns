@@ -151,12 +151,17 @@ function cmd_list_records(zoneId) {
     });
 }
 
-function cmd_add_record(dn_in, addrStr) {
+function cmd_add_record(fqdn, addrStr) {
+  var re = /\.$/g;
+  if (!re.test(fqdn)) {
+    fqdn = fqdn + '.';
+  }
+
   var addr = null;
   var dnr = null;
   try {
     addr = ip6addr.parse(addrStr);
-    dnr = parseDomain(dn_in);
+    dnr = parseDomain(fqdn);
     if ((dnr.type === ParseResultType.Invalid) ||
         (dnr.type === ParseResultType.Ip)) {
       throw new Error("Invalid domain name: " + dn);
@@ -168,7 +173,6 @@ function cmd_add_record(dn_in, addrStr) {
   }
 
   const {subDomains, domain, topLevelDomains} = dnr;
-  const subStr = subDomains.join('.');  // check: reversed?
   const dn = domain + '.' + topLevelDomains + '.';
 
   var rec_type = (addr.kind() === 'ipv6' ? 'AAAA' : 'A');
@@ -180,9 +184,9 @@ function cmd_add_record(dn_in, addrStr) {
 	process.exit(1);
       }
 
-      return addZoneRecord(id, subStr + '.' + dn, rec_type, addrStr);
+      return addZoneRecord(id, fqdn, rec_type, addrStr);
     }).then(function(added) {
-      console.log("ADDED", added);
+      console.log("SUCCESS_RECEIPT", added);
     })
     .catch(function(err) {
       console.error(err.message);
