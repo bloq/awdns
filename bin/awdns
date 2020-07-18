@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+//
+// awdns - Command line admin tool for AWS Route53 DNS service
+//
+// Copyright (c) Bloq Inc and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root
+// for details.
+//
 
 'use strict';
 
@@ -7,11 +14,12 @@ const DefaultTTL = 300;
 const util = require('util');
 const AWS = require('aws-sdk');
 const route53 = new AWS.Route53();
-const pjson = require('../package.json');
 const ip6addr = require('ip6addr');
 const {parseDomain, ParseResultType} = require("parse-domain");
-
 const { Command } = require('commander');
+
+const pjson = require('../package.json');
+
 const program = new Command();
 
 const reId = new RegExp('/([^/]+)$');
@@ -67,17 +75,20 @@ function dn_normalize(fqdn) {
   return fqdn;
 }
 
-// query AWS account zone list
-function getZoneList() {
-  const params = {};
+// query AWS account zone list. handle pagination recursively.
+function getZoneList(marker) {
+  const params = { Marker: marker };
 
-  const p = route53.listHostedZones(params).promise();
-  return p.then(function(data) {
-    if (data.IsTruncated) {
-      console.warn("TODO - Record data truncated");
-    }
-    return data.HostedZones;
-  });
+  return route53.listHostedZones(params).promise()
+    .then(function(data) {
+      if (data.IsTruncated) {
+        return getZoneList(data.NextMarker)
+	  .then(function(hostedZones) {
+	    return data.HostedZones.concat(hostedZones);
+	  });
+      }
+      return data.HostedZones;
+    });
 }
 
 // lookup zone ID, given a domain name
