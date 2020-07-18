@@ -2,6 +2,8 @@
 
 'use strict';
 
+const DefaultTTL = 300;
+
 const util = require('util');
 const AWS = require('aws-sdk');
 const route53 = new AWS.Route53();
@@ -17,6 +19,7 @@ const reId = new RegExp('/([^/]+)$');
 program.version(pjson.version);
 
 program
+  .option('--ttl <num>', 'Specify TTL for new records', xParseInt, DefaultTTL)
   .option('--verbose', 'Enable verbose responses');
 
 program
@@ -40,6 +43,12 @@ program
   .action(cmd_list_zones);
 
 program.parse(process.argv);
+
+// commander-specific parseInt (from commander docs)
+function xParseInt(value, dummyPrevious) {
+  // parseInt takes a string and an optional radix
+  return parseInt(value);
+}
 
 // remove the "/static string/" prefix from zone ID
 function shortZoneId(longId) {
@@ -112,7 +121,7 @@ function addZoneRecord(id, subDomain, rec_type, addrStr)
 	  Action: 'CREATE',
 	  ResourceRecordSet: {
 	    Name: subDomain,
-	    TTL: 300,
+	    TTL: program.ttl,
 	    Type: rec_type,
 	    ResourceRecords: [
 	      { Value: addrStr },
