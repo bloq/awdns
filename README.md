@@ -50,10 +50,12 @@ AWS authentication is handled via the AWS JavaScript SDK ([Credential details he
 
 Full usage documentation via `--help` on the command line:
 ```
+$ ./bin/awdns --help
 Usage: awdns [options] [command]
 
 Options:
   -V, --version         output the version number
+  --ttl <num>           Specify TTL for new records (default: 300)
   --verbose             Enable verbose responses
   -h, --help            display help for command
 
@@ -62,7 +64,6 @@ Commands:
   del <FQDN>            Delete all RRs from a zone with given FQDN
   ls <DOMAIN>           List all records for zone
   zones                 List all zones
-
   help [command]        display help for command
 ```
 
