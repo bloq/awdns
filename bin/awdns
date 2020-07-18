@@ -150,8 +150,7 @@ function addZoneRecord(id, subDomain, rec_type, addrStr)
     },
   };
 
-  const p = route53.changeResourceRecordSets(params).promise();
-  return p;
+  return route53.changeResourceRecordSets(params).promise();
 }
 
 // delete resource records from zone, given zone ID and RRs to delete
@@ -174,8 +173,7 @@ function delZoneRecords(id, rrs)
     params.ChangeBatch.Changes.push(changeObj);
   });
 
-  const p = route53.changeResourceRecordSets(params).promise();
-  return p;
+  return route53.changeResourceRecordSets(params).promise();
 }
 
 // display zone to stdout
