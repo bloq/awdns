@@ -1,12 +1,12 @@
 {
   "name": "awdns",
   "version": "0.9.1",
-  "description": "",
+  "description": "Easy-to-use command line DNS admin tool for AWS Route53 zones",
   "main": "bin/awdns",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Jeff Garzik",
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.714.2",
@@ -14,5 +14,16 @@
     "ip6addr": "^0.2.3",
     "parse-domain": "^3.0.2"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+   "repository": {
+      "type": "git",
+      "url": "https://github.com/bloq/awdns.git"
+  },
+  "homepage": "https://github.com/bloq/awdns",
+  "bugs": {
+    "url": "https://github.com/bloq/awdns/issues"
+  },
+  "keywords": [
+    "dns", "aws", "amazon", "route53", "cli"
+  ]
 }
