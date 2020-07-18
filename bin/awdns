@@ -77,7 +77,9 @@ function dn_normalize(fqdn) {
 
 // query AWS account zone list. handle pagination recursively.
 function getZoneList(marker) {
-  const params = { Marker: marker };
+  const params = {
+    Marker: marker,		// null, on first call
+  };
 
   return route53.listHostedZones(params).promise()
     .then(function(data) {
@@ -106,19 +108,24 @@ function lookupZoneId(name) {
   });
 }
 
-// query all records in a specific zone
-function getRecordList(id) {
+// query zone's RR list. handle pagination recursively.
+function getRecordList(id, srn, srt) {
   const params = {
     HostedZoneId: id,
+    StartRecordName: srn,	// null, on first call
+    StartRecordType: srt,	// null, on first call
   };
 
-  const p = route53.listResourceRecordSets(params).promise();
-  return p.then(function(data) {
-    if (data.IsTruncated) {
-      console.warn("TODO - Record data truncated");
-    }
-    return data.ResourceRecordSets;
-  });
+  return route53.listResourceRecordSets(params).promise()
+    .then(function(data) {
+      if (data.IsTruncated) {
+        return getRecordList(id, data.NextRecordName, data.NextRecordType)
+	  .then(function(recordSets) {
+	    return data.ResourceRecordSets.concat(recordSets);
+	  });
+      }
+      return data.ResourceRecordSets;
+    });
 }
 
 // add resource record to zone, given zone ID

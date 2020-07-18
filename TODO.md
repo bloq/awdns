@@ -1,5 +1,4 @@
 
-* Support pagination of record lists
 * Batch removal:  Multiple FQDNs on 'del' command line
 * Batch add options:
 	* pairs supplied via CLI args
