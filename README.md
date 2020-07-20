@@ -1,4 +1,3 @@
-
 # awdns - Command line DNS admin tool for AWS
 
 Create, update and delete DNS records and zones hosted at AWS.
@@ -51,7 +50,8 @@ awdns del foo4.example.com
 
 ## Usage
 
-AWS authentication is handled via the AWS JavaScript SDK ([Credential details here.](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)).
+AWS authentication is handled via the AWS JavaScript SDK.
+See [Setting Credentials in Node.js](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) for details.
 
 Full usage documentation via `--help` on the command line:
 
