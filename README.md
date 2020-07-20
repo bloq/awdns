@@ -20,28 +20,33 @@ domains for the most popular DNS records (A, AAAA).
 ## Examples
 
 List all zones in the AWS account.
-```
-$ ./bin/awdns zones
+
+```sh
+awdns zones
 ```
 
 List all zones in the AWS account, with JSON output.
-```
-$ ./bin/awdns --verbose zones
+
+```sh
+awdns --verbose zones
 ```
 
 List all records associated with a single zone, in a BIND-like format.
-```
-$ ./bin/awdns ls example.com
+
+```sh
+awdns ls example.com
 ```
 
 Add a new record, to a pre-existing zone in the AWS account.
-```
-$ ./bin/awdns add foo4.example.com 127.0.0.1
+
+```sh
+awdns add foo4.example.com 127.0.0.1
 ```
 
 Delete *all* records matching NAME, from a pre-existing zone in the AWS account.
-```
-$ ./bin/awdns del foo4.example.com
+
+```sh
+awdns del foo4.example.com
 ```
 
 ## Usage
@@ -49,8 +54,9 @@ $ ./bin/awdns del foo4.example.com
 AWS authentication is handled via the AWS JavaScript SDK ([Credential details here.](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)).
 
 Full usage documentation via `--help` on the command line:
-```
-$ ./bin/awdns --help
+
+```console
+$ awdns --help
 Usage: awdns [options] [command]
 
 Options:
@@ -69,9 +75,6 @@ Commands:
 
 ## Installation
 
+```sh
+npm install --global awdns
 ```
-$ git clone https://github.com/bloq/awdns.git
-$ cd awdns
-$ npm i
-$ ./bin/awdns ...
-
